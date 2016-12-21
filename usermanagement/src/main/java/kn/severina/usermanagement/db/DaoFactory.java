@@ -4,39 +4,46 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.util.Properties;
 
-public class DaoFactory {
-	private static final String USER_DAO = "dao.kn.severina.usermanagement.db.UserDao";
-	private Properties properties;
-	private final static DaoFactory INSTANCE = new DaoFactory();
-	public static DaoFactory getInstance(){
-		return INSTANCE;
-	}
-	private DaoFactory(){
+public abstract class DaoFactory {
+	protected static final String USER_DAO = "dao.kn.severina.usermanagement.db.UserDao";
+	private static final String DAO_FACTORY = "dao.factory";
+	protected static Properties properties;
+	private static DaoFactory instance;
+
+	static{
 		properties = new Properties();
 		try {
-			properties.load(getClass().getClassLoader().getResourceAsStream("settings.properties"));
-		} catch (IOException e) {
+			properties.load(DaoFactory.class.getClassLoader()
+					.getResourceAsStream("settings.properties"));
+	} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		
 	}
-	public void init (Properties properties)
-	{
-		this.properties = properties;
+	public static synchronized DaoFactory getInstance() {
+		if (instance == null) {
+			Class factoryClass;
+			try {
+				factoryClass = Class.forName(properties
+						.getProperty(DAO_FACTORY));
+				instance = (DaoFactory)factoryClass.newInstance();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return instance;
 	}
-	private ConnectionFactory getConnectionFactory(){
+
+	protected DaoFactory() {
+	}
+
+	public static void init(Properties prop) {
+		properties = prop;
+		instance = null;
+	}
+
+	protected ConnectionFactory getConnectionFactory() {
 		return new ConnectionFactoryImpl(properties);
 	}
-	public UserDao getUserDao(){
-		UserDao result = null;
-		try {
-			Class clazz = Class.forName(properties
-					.getProperty(USER_DAO));
-			result = (UserDao) clazz.newInstance();
-			result.setConnectionFactory(getConnectionFactory());
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		return result;
-	}
+
+	public abstract UserDao getUserDao();
 }

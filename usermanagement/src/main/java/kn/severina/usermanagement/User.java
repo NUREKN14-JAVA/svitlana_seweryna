@@ -8,6 +8,21 @@ public class User {
 	private String firstName;
 	private String lastName;
 	private Date dateOfBirthd;
+	public User(String firstName, String lastName, Date date) {
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.dateOfBirthd = date;
+	}
+	public User(Long id, String firstName, String lastName, Date date) {
+		this.id = id;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.dateOfBirthd = date;
+	
+	}
+	public User() {
+		
+	}
 	public Long getId() {
 		return id;
 	}
@@ -44,5 +59,24 @@ public class User {
 		int year = calendar.get(Calendar.YEAR);
 		return currentYear - year;
 	}
+	public boolean equals(Object obj) {
+		if (obj == null){
+			return false;
+		}
+		if (this == obj){
+			return true;
+		}
+		if (this.getId()==null && ((User)obj).getId() ==null){
+			return true;
+		}
+		return this.getId().equals(((User) obj).getId());
+	}
+	public int hashCode() {
+		if (this.getId()==null){
+			return 0;
+		}
+		return this.getId().hashCode();
+	}
+	
 
 }

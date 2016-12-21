@@ -16,6 +16,10 @@ class HsqldbUserDao implements UserDao {
 
 	private static final String SELECT_ALL_QUERY = "SELECT id, firstname, lastname, dateofbirth from users";
 	private static final String INSERT_QUERY = "INSERT INTO users(firstname, lastname, dateofbirth) VALUES (?,?,?)";
+	private static final String UPDATE_QUERY = "UPDATE users SET firstname = ?, lastname = ?, dateofbirth = ? WHERE id = ? ";
+	private static final String DELETE_QUERY = "DELETE FROM users WHERE id = ?";
+	private static final String FIND_QUERY = "SELECT id, firstname, lastname, dateofbirth from users WHERE id = ? ";
+	
 	private ConnectionFactory connectionFactory;
 
 	public HsqldbUserDao() {
@@ -70,18 +74,78 @@ class HsqldbUserDao implements UserDao {
 	}
 
 	public void update(User user) throws DatabaseException {
-		// TODO Auto-generated method stub
+		try {
+			Connection connection = connectionFactory.createConnection();
+			PreparedStatement statement = connection
+					.prepareStatement(UPDATE_QUERY);
+			statement.setString(1, user.getFirstName());
+			statement.setString(2, user.getLastName());
+			statement.setDate(3, new Date(user.getDateOfBirthd().getTime()));
+			statement.setLong(4, user.getId().longValue());
+			int n = statement.executeUpdate();
+			if (n != 1) {
+				throw new DatabaseException("Number of the inserted rows: " + n);
+			}
+			statement.close();
+			connection.close();
+		} catch (DatabaseException e) {
+			throw e;
+		} catch (SQLException e) {
+			throw new DatabaseException(e);
+		}
 
 	}
 
 	public void delete(User user) throws DatabaseException {
-		// TODO Auto-generated method stub
+		try {
+			Connection connection = connectionFactory.createConnection();
+			PreparedStatement statement = connection
+					.prepareStatement(DELETE_QUERY);
+			statement.setLong(1, user.getId().longValue());
+			int n = statement.executeUpdate();
+			if (n != 1) {
+				throw new DatabaseException("Number of the inserted rows: " + n);
+			}
+			statement.close();
+			connection.close();
+		} catch (DatabaseException e) {
+			throw e;
+		} catch (SQLException e) {
+			throw new DatabaseException(e);
+		}
 
 	}
 
 	public User find(Long id) throws DatabaseException {
-		// TODO Auto-generated method stub
-		return null;
+		User user = null;
+		try {
+			Connection connection = connectionFactory.createConnection();
+			PreparedStatement statement = connection
+					.prepareStatement(FIND_QUERY);
+			statement.setLong(1, id.longValue());
+			ResultSet resultSet = statement.executeQuery();
+			int n =0;
+			while (resultSet.next())
+			{
+				++n;
+				user = new User();
+				user.setId(new Long(resultSet.getLong(1)));
+				user.setFirstName(new String(resultSet.getString(2)));
+				user.setLastName(new String(resultSet.getString(3)));
+				user.setDateOfBirthd(new java.util.Date(resultSet.getDate(4).getTime()));
+			}
+			if (n > 1) {
+				throw new DatabaseException("Number of the inserted rows: " + n);
+			}
+			resultSet.close();
+			statement.close();
+			connection.close();
+		} catch (DatabaseException e) {
+			throw e;
+		} catch (SQLException e) {
+			throw new DatabaseException(e);
+		}
+		return user;
 	}
 
 	public Collection findAll() throws DatabaseException {
